@@ -1,0 +1,135 @@
+#Copyright 2023 Xiaofeng Zu
+#
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
+
+# zmake top configuartion
+
+# includes, note that file contents MUST NOT be overlapped,
+# otherwise the latter will overwrite the former.
+
+includes:
+  - mod1/mod11/mod11.yml  # library mod11 yaml
+  - mod1/mod12/mod12.yml  # library mod12 yaml
+  - mod2/mod2.yml         # library mod2 yaml
+  - main/main.yml         # application main/mani2 yaml
+
+# entities defines for the following types:
+#   1)'var':    variables that is used to save build arguments or intermediate variables,
+#   could be be referenced by '$(variable name)';
+#   2)'target': target for build command(make/ninja...);
+#   3)'app':    applications that could be executed;
+#   4)'lib':    libraries that could be linked to applications.
+
+# system variables
+#   1)SRC_PATH: path for source code
+#   2)PRJ_PATH: path for project
+
+# customer variables
+#
+# example:
+#
+#   variable name:  # must be unique for all entities
+#     type: var
+#     desc: xxx # optional, description that is only for display
+#     val:  xxx # string that could include references to other variables
+                # that have beed defined, such as '$(var_name)', or any value
+
+CC:
+  type: var
+  desc: compiler for objects
+  val:  gcc -MD
+
+AR:
+  type: var
+  desc: archiver for libraries
+  val:  ar
+
+LD:
+  type: var
+  desc: linker for applications
+  val:  gcc
+
+# libraries
+#
+# example:
+#
+# library name:             # must be unique for all entities
+#   type:       lib
+#   desc:       xxx         # optional, description that is only for display
+#   opt:        CONFIG_XXX  # optional, Kconfig option that decides whether library is enabled:
+#                           #   if present, it must be a Kconfig option that will be 'y' or 'n';
+#                           #   if absent, library will be will be forced to enable.
+#   src:                    # list, source files or directories:
+#     - $(ZMake variable name)/xxx/xxx.c
+#     - $(ZMake variable name)/xxx  # for directory, all source files in it will be involved
+#   hdrdirs:                # optional, list, public header file directories
+#     - $(ZMake variable name)/xxx
+#   cflags:                 # optional, additional compiler flags for C files
+#     all:      xxx         # compiler flags for all C files
+#     xxx.c:    xxx         # compiler flags for xxx.c
+#   cppflags:               # optional, additional compiler flags for cpp files
+#     all:      xxx         # compiler flags for all CPP files
+#     xxx.cpp:  xxx         # compiler flags for xxx.cpp
+#   asmflags:   xxx         # optional, additional compiler flags for assembly files
+#     all:      xxx         # compiler flags for all assembly files
+#     xxx.s:    xxx         # compiler flags for xxx.s
+#     xxx.S:    xxx         # compiler flags for xxx.S
+
+# applications
+#
+# example:
+#
+# application name:         # must be unique for all entities
+#   type:       app
+#   desc:       xxx         # optional, description that is only for display
+#   opt:        CONFIG_XXX  # optional, Kconfig option that decides whether application is enabled:
+#                           #   if present, it must be a Kconfig option that will be 'y' or 'n';
+#                           #   if absent, application will be will be forced to enable.
+#   src:                    # list, source files or directories:
+#     - $(ZMake variable name)/xxx/xxx.c
+#     - $(ZMake variable name)/xxx  # for directory, all source files in it will be involved
+#   cflags:                 # optional, additional compiler flags for C files
+#     all:      xxx         # compiler flags for all C files
+#     xxx.c:    xxx         # compiler flags for xxx.c
+#   cppflags:               # optional, additional compiler flags for cpp files
+#     all:      xxx         # compiler flags for all CPP files
+#     xxx.cpp:  xxx         # compiler flags for xxx.cpp
+#   asmflags:   xxx         # optional, additional compiler flags for assembly files
+#     all:      xxx         # compiler flags for all assembly files
+#     xxx.s:    xxx         # compiler flags for xxx.s
+#     xxx.S:    xxx         # compiler flags for xxx.S
+#   linkflags:  xxx         # optional, additional linker flags
+#   libs:       xxx         # optional, list, libraries depended:
+#     - xxx
+
+# system targets
+#
+#   1)config:     confogure project
+#   2)all:        building all applications/libraries, default target
+#   3)clean:      clean all compiled files
+#
+#   To enable verbose output, add "V=1" option for make or add "-v" for ninja.
+
+# customer targets
+#
+# example:
+#
+# target name:      # must be unique for all entities
+#   type: target
+#   desc: xxx # optional, description that is only for display
+#   cmd:  xxx # optional, commands that need be executed with description:
+#     desc:   command
+#   deps: xxx # optional, modules depended:
+#     - xxx
+#
+# Note that 'cmd' and 'deps' MUST NOT be absent at the same time.
