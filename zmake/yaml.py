@@ -5,7 +5,7 @@
     Supply YAML related functions.
 
     :copyright: (c) 2023 by Matthew Zu.
-    :license: Apache License, Version 2.0, see LICENSE for more details.
+    :license: Mozilla Public License, Version 2.0, see LICENSE for more details.
 """
 
 import os, pprint, yaml, logging
