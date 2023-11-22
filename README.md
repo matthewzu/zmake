@@ -1,15 +1,16 @@
-# zmake
+# ZMake - A Make/ninja-build file generator from Kconfig/YAML
 
-- [zmake](#zmake)
+- [ZMake - A Make/ninja-build file generator from Kconfig/YAML](#zmake---a-makeninja-build-file-generator-from-kconfigyaml)
   - [1. Overview](#1-overview)
-  - [2. YAML Configuration](#2-yaml-configuration)
-  - [3. How to add one module](#3-how-to-add-one-module)
-  - [4. How to use](#4-how-to-use)
-  - [4. TODO](#4-todo)
+  - [2. How to intsall](#2-how-to-intsall)
+  - [3. How to use](#3-how-to-use)
+  - [4. YAML Configuration](#4-yaml-configuration)
+  - [5. How to add one module](#5-how-to-add-one-module)
+  - [6. TODO](#6-todo)
 
 ## 1. Overview
 
-This is A Make/ninja-build file generator from Kconfig/YAML config files for the modularized softwares. It makes use of `Make`, `Ninja-build` and `Kconfiglib`. For `Kconfiglib`, more details could be found at [github.com/ulfalizer/Kconfiglib](https://github.com/ulfalizer/Kconfiglib).
+This is a Make/ninja-build file generator from Kconfig/YAML config files for the modularized softwares. It makes use of `Make`, `Ninja-build` and `Kconfiglib`. For `Kconfiglib`, more details could be found at [github.com/ulfalizer/Kconfiglib](https://github.com/ulfalizer/Kconfiglib).
 
 The following features are supplied:
 
@@ -17,7 +18,7 @@ The following features are supplied:
 2. Tools and basic options for **CC/AR/LD** could be specified;
 3. Multiple applications and libraries are supported;
 4. Multiple level modules are supported;
-5. Each module has its own public and/or private header files, source files(C/C++/assembly), Kconfig scripts and **YAML configuration file**;
+5. Each module has its own public and/or private header files, source files(C/C++/assembly), **Kconfig scripts** and **YAML configuration file**;
 6. All the files that belongs to one module are placed in one directory;
 7. The following attribute of the libraries could be specified:
 
@@ -40,11 +41,102 @@ The following features are supplied:
 
     - Compiler flags;
 
-10. Kconfig scripts starts at `Kconfig` or other name specified by `-k "Kconfig file"` in the root directory, and defconfig file specified by `-d "defconfig file"` could be specified;
+10. `Kconfig` scripts starts at `Kconfig` or other name specified by `-k "Kconfig file"` in the root directory, and defconfig file specified by `-d "defconfig file"` could be specified;
 11. Build order are decided by the defined order in YAML configuration files for Makefile;
 12. Build order are decided by the depends in YAML configuration files for Ninja build.
 
-## 2. YAML Configuration
+## 2. How to intsall
+
+Before installation of **ZMake**:
+
+1. `Python3` and build tools(`Make` or `Ninja-build`) should be installed;
+2. `Kconfiglib` should be installed:
+
+    ```bash
+    <path/of/demo>$ pip3 install kconfiglib
+    ```
+
+    **Note** that `Kconfiglib` path may be need to be added to 'PATH' environment variable; for Linux, execute `export PATH=$PATH:~/.local/bin` in the shell or add this command to `~/.bashrc` or `~/.bash_profile`;
+
+**ZMake** could be installed by `pip3`:
+
+```bash
+$ pip3 install zmake
+```
+
+**ZMake** could be installed from source code:
+
+```bash
+$ git clone https://github.com/matthewzu/zmake.git
+$ cd zmake
+zmake $ python setup.py sdist bdist_wheel
+zmake $ pip3 install dist/zmake-0.1.0.tar.gz
+```
+
+## 3. How to use
+
+1. Create a source code directory with demo files:
+
+    ```bash
+    $ zmake-demo <path/of/demo>
+    ```
+
+2. Generate build script by one of the following commands:
+
+    ```bash
+    <path/of/demo>$ zmake <path/of/project>                     # generate Makefile
+    <path/of/demo>$ zmake <path/of/project> -g ninja            # generate build.ninja
+    <path/of/demo>$ zmake <path/of/project> -V                  # generate Makefile with verbose output enabled
+    <path/of/demo>$ zmake <path/of/project> -d test_defconfig   # generate Makefile with defconfig file
+    ```
+
+    **Note** that:
+       * The build log will be saved in `<path/of/project>/zmake.log`;
+       * `Makefile` or `build.ninja` will be egnerated in <path/of/project>;
+       * The more options could be used:
+
+      ```bash
+      $ zmake -h
+      usage: zmake [-h] [-v] [-V] [-k "Kconfig file"] [-y "YAML file"]
+                  [-d "defconfig file" | -m "Source Code Path"] [-g {make,ninja}]
+                  project
+
+      ZMake build Generator
+
+      positional arguments:
+        project               project path
+
+      optional arguments:
+        -h, --help            show this help message and exit
+        -v, --version         show version
+        -V, --verbose         enable verbose output
+        -k "Kconfig file", --kconfig "Kconfig file"
+                              specify Kconfig root configuration file, "Kconfig" by default
+        -y "YAML file", --yaml "YAML file"
+                              specify YAML root configuration file, "top.yml" by default
+        -d "defconfig file", --defconfig "defconfig file"
+                              specify defconfig file
+        -m "Source Code Path", --menuconfig "Source Code Path"
+                              enable menuconfig method, used after project created ONLY
+        -g {make,ninja}, --generator {make,ninja}
+                              build generator, "make" by default
+      ```
+
+3. Configure/build/clean project:
+
+    ```bash
+    <path/of/project>$ make config     # configuration project
+    <path/of/project>$ make            # build project
+    <path/of/project>$ make clean      # clean project
+    <path/of/project>$ make V=1        # build project with verbose output enabled
+    <path/of/project>$
+    <path/of/project>$ ninja config    # configuration project
+    <path/of/project>$ ninja           # build project
+    <path/of/project>$ ninja clean     # clean project
+    <path/of/project>$ ninja -v        # build project with verbose output enabled
+    ```
+
+## 4. YAML Configuration
 
 YAML root configuration file (`top.yml` by default) should be created in the root directory and include the the references to other configuration files or ZMake Entity configurations. For example:
 
@@ -199,7 +291,7 @@ main:
     - mod12
 ```
 
-## 3. How to add one module
+## 5. How to add one module
 
 1. Create one directory in the framework;
 2. Add souce files and `YAML configuration file` to this module;
@@ -207,64 +299,8 @@ main:
 4. Add private header files to this module as you need;
 5. Add Kconfig files(`*.config`) to this module，and include them from Kconfig in the root directory of the framework.
 
-## 4. How to use
 
-1. Intstall Make and Python3;
-2. Install Kconfiglib:
 
-    ```bash
-    simple-build-framework$ pip3 install kconfiglib
-    ```
-
-3. Kconfiglib path may be need to be added to 'PATH' environment variable; for Linux, execute `export PATH=$PATH:~/.local/bin` in the shell or add this command to `~/.bashrc` or `~/.bash_profile`;
-4. Configurate project:
-
-    ```bash
-    simple-build-framework$ python3 zmake.py ../build/zmake                     # generate Makefile in ../build/zmake
-    simple-build-framework$ python3 zmake.py ../build/zmake -g ninja            # generate build.ninja in ../build/zmake
-    simple-build-framework$ python3 zmake.py ../build/zmake -V                  # generate Makefile in ../build/zmake with verbose output enabled
-    simple-build-framework$ python3 zmake.py ../build/zmake -d test_defconfig   # generate Makefile in ../build/zmake with defconfig file
-    simple-build-framework$ python3 zmake.py ../build/zmake -y xxx.yml          # generate Makefile in ../build/zmake with YAML root configuration file specified
-    simple-build-framework$ python3 zmake.py ../build/zmake -k xxx.config       # generate Makefile in ../build/zmake with Kconfig root configuration file specified
-    ```
-
-    Note that all the options could be used:
-
-    ```bash
-    simple-build-framework$ python3 zmake.py --h
-    usage: zmake.py [-h] [-v] [-V] [-d "defconfig file" | -m "Source Code Path"] [-g {make,ninja}] project
-
-    zmake project builder
-
-    positional arguments:
-    project               project path
-
-    optional arguments:
-    -h, --help            show this help message and exit
-    -v, --version         show version
-    -V, --verbose         enable verbose output
-    -d "defconfig file", --defconfig "defconfig file"
-                            specify defconfig file
-    -m "Source Code Path", --menuconfig "Source Code Path"
-                            enable menuconfig method, used after project created ONLY
-    -g {make,ninja}, --generator {make,ninja}
-                            build generator
-    ```
-
-5. Build project:
-
-    ```bash
-    ../build/zmake$ make config     # configuration project
-    ../build/zmake$ make            # build project
-    ../build/zmake$ make clean      # clean project
-    ../build/zmake$ make V=1        # build project with verbose output enabled
-    ../build/zmake$
-    ../build/zmake$ ninja config    # configuration project
-    ../build/zmake$ ninja           # build project
-    ../build/zmake$ ninja clean     # clean project
-    ../build/zmake$ ninja -v        # build project with verbose output enabled
-    ```
-
-## 4. TODO
+## 6. TODO
 
 1. Add support for dynamic library.

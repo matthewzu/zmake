@@ -9,10 +9,7 @@
 """
 
 import os, pprint, yaml, logging
-
-from . import ZMAKE_DBG_FMT, _SRC_TREE, _zmake_exception
-
-logging.basicConfig(level = logging.DEBUG, format = ZMAKE_DBG_FMT)
+import zmake.core
 
 # yaml
 
@@ -28,17 +25,17 @@ def _yml_file_load(path: str):
     global _YAML_FILES
     global _YAML_DATA
 
-    real_path = os.path.join(_SRC_TREE, path)
+    real_path = os.path.join(zmake.core.SRC_TREE, path)
     if not os.path.isfile(real_path):
-        raise _zmake_exception("yaml load: %s NOT exist" %real_path)
+        raise zmake.core.exception("yaml load: %s NOT exist" %real_path)
 
-    logging.debug("open %s", real_path)
+    zmake.core.LOGGER.debug("open %s", real_path)
     fd = open(real_path, 'r', encoding='utf-8')
 
-    logging.debug("load %s", real_path)
+    zmake.core.LOGGER.debug("load %s", real_path)
     data = yaml.safe_load(fd.read())
     if data == None:
-        raise _zmake_exception("%s is empty" %real_path)
+        raise zmake.core.exception("%s is empty" %real_path)
 
     fd.close()
     _YAML_FILES += os.path.abspath(real_path)
@@ -62,6 +59,7 @@ def init(path = ''):
     if path == '':
         path = 'top.yml'
 
+    zmake.core.LOGGER.debug("loading %s", path)
     _yml_file_load(path)
 
 def data():

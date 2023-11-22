@@ -9,7 +9,7 @@ with open("README.md","r") as fd:
 
 setuptools.setup(
     name                            = 'zmake',
-    version                         = '0.1',
+    version                         = '0.1.0',
     author                          = 'Matthew Zu',
     author_email                    = 'xiaofeng_zu@163.com',
     keywords                        = ['make', 'ninja-build', 'yaml', 'kconfig'],
@@ -31,7 +31,7 @@ setuptools.setup(
         ],
     },
     package_data                    = {
-        'zmake': ['demo/*', 'demo/main/*', 'demo/mod1/*', 'demo/mod1/mod11/*',
+        'zmake': ['demo/*', 'demo/main/*', 'demo/mod1/*', 'demo/mod1/mod11/*', 'demo/mod1/mod11/source/*',
             'demo/mod1/mod11/include/mod11/*', 'demo/mod1/mod12/*', 'demo/mod2/*', 'demo/mod2/h/*'],
     },
 )

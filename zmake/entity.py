@@ -9,9 +9,7 @@
 """
 
 import os, re, pprint, logging, fnmatch
-from . import ZMAKE_DBG_FMT, _SRC_TREE
-
-logging.basicConfig(level = logging.DEBUG, format = ZMAKE_DBG_FMT)
+import zmake.core
 
 # source file types
 
@@ -40,13 +38,13 @@ class entity(object):
 
     def __new__(cls, name, type, desc= ""):
         if not isinstance(name, str):
-            raise _zmake_exception("'name' MUST be str for ZMake Entity" %str(name))
+            raise zmake.core.exception("'name' MUST be str for ZMake Entity" %str(name))
 
         if type not in ENTITY_TYPES:
-            raise _zmake_exception("invalid type for ZMake Entity(%s)" %(str(type), name))
+            raise zmake.core.exception("invalid type for ZMake Entity(%s)" %(str(type), name))
 
         if not isinstance(desc, str):
-            raise _zmake_exception("'desc' MUST be str for ZMake Entity(%s)" %(str(name), name))
+            raise zmake.core.exception("'desc' MUST be str for ZMake Entity(%s)" %(str(name), name))
 
         return super(entity, cls).__new__(cls)
 
@@ -65,7 +63,7 @@ class variable(entity):
 
     def __new__(cls, name, val, desc = ""):
         if val == None:
-            raise _zmake_exception("invalid value for ZMake variable %s" %name)
+            raise zmake.core.exception("invalid value for ZMake variable %s" %name)
         else:
             return super(variable, cls).__new__(cls, name, ENTITY_TYPE_VAR, desc)
 
@@ -78,8 +76,8 @@ class variable(entity):
         else:
             self.val    = variable.dereference(val)
 
-        logging.debug("create ZMake variable %s", name)
-        logging.debug("\tdesc = %s val = %s", desc, str(self.val))
+        zmake.core.LOGGER.debug("create ZMake variable %s", name)
+        zmake.core.LOGGER.debug("\tdesc = %s val = %s", desc, str(self.val))
         variable._vars.setdefault(name, self)
 
     @staticmethod
@@ -134,7 +132,7 @@ class variable(entity):
 
             var = variable._find(var_name)
             if var == None:
-                raise _zmake_exception("%s could NOT be referenced before defined" %var_name)
+                raise zmake.core.exception("%s could NOT be referenced before defined" %var_name)
             else:
                 fragments[idx]  = var.val
 
@@ -150,7 +148,7 @@ class variable(entity):
         generate makefile segments for all ZMake variables and write fo file
         """
         for key, val in variable._vars.items():
-            logging.debug("generate variable %s", key)
+            zmake.core.LOGGER.debug("generate variable %s", key)
             fd.write("%s\t= %s\n" %(key, str(val.val)))
 
         fd.write("\n")
@@ -162,7 +160,7 @@ class variable(entity):
         generate ninja segments for all ZMake variables and write fo file
         """
         for key, val in variable._vars.items():
-            logging.debug("generate variable %s", key)
+            zmake.core.LOGGER.debug("generate variable %s", key)
             fd.write("%s = %s\n" %(key, str(val.val)))
 
         fd.write("\n")
@@ -182,7 +180,7 @@ class _object(entity):
     def __init__(self, name, desc = "", flags = '', libname = ''):
         self.name   = name
         self.flags  = '-I$(PRJ_PATH)/config ' + flags
-        logging.debug("create ZMake Object %s", name)
+        zmake.core.LOGGER.debug("create ZMake Object %s", name)
 
         self._obj_dir   = os.path.join('$(PRJ_PATH)/objs', libname)
         self._obj_name  = os.path.join(self._obj_dir,
@@ -194,7 +192,7 @@ class _object(entity):
         generate makefile segments for specified ZMake objects with module name and write fo file
         """
 
-        logging.debug("generate object %s", self.name)
+        zmake.core.LOGGER.debug("generate object %s", self.name)
         fd.write("%s: %s\n" %(self._obj_name, self.name))
         fd.write("\t$(Q)$(if $(QUIET), echo '<%s>': Compiling %s to %s)\n"
                 %(mod_name, os.path.basename(self.name), (os.path.basename(self._obj_name))))
@@ -213,7 +211,7 @@ class _object(entity):
         self._obj_name  = variable.ninja_reference_format(self._obj_name)
         self._dep_name  = variable.ninja_reference_format(self._dep_name)
 
-        logging.debug("generate object %s", self.name)
+        zmake.core.LOGGER.debug("generate object %s", self.name)
         fd.write("build %s: rule_mkdir\n" %self._obj_dir)
         fd.write("build %s: rule_cc %s | %s\n" %(self._obj_name, self.name, self._obj_dir))
         fd.write("    DEP = %s\n" %self._dep_name)
@@ -246,10 +244,10 @@ class _module(entity):
 
     def __new__(cls, name, type, src, desc = "", cflags = {}, cppflags = {}, asmflags = {}):
         if type != ENTITY_TYPE_APP and type != ENTITY_TYPE_LIB:
-            raise _zmake_exception("invalid type %s for ZMake module(%s)" %(type, name))
+            raise zmake.core.exception("invalid type %s for ZMake module(%s)" %(type, name))
 
         if not isinstance(src, list):
-            raise _zmake_exception("'src' (%s) MUST be list for ZMake module(%s)" %(str(src), name))
+            raise zmake.core.exception("'src' (%s) MUST be list for ZMake module(%s)" %(str(src), name))
 
         return super(_module, cls).__new__(cls, name, type, desc)
 
@@ -266,9 +264,8 @@ class _module(entity):
                 file_flags = _module._find_flags(file_name, type,
                     cflags, cppflags, asmflags)
 
-                reg_src_path = re.compile(_SRC_TREE)
                 self.src.setdefault(file_name,
-                    _object(reg_src_path.sub("$(SRC_PATH)", file), type,
+                    _object(file.replace(zmake.core.SRC_TREE, "$(SRC_PATH)"), type,
                         flags = file_flags, libname = name))
 
     def objs(self):
@@ -315,7 +312,7 @@ class _module(entity):
         #
 
         if not os.path.exists(path):
-            logging.warning("invalid path: %s", path)
+            zmake.core.LOGGER.warning("invalid path: %s", path)
             return {}
 
         srcs = {}
@@ -347,22 +344,22 @@ class _module(entity):
         elif type == _ZMAKE_SRC_TYPE_ASM:
             flags = asmflags
         else:
-            raise _zmake_exception("invalid source type %s" %type)
+            raise zmake.core.exception("invalid source type %s" %type)
 
         if not isinstance(flags, dict):
             if isinstance(flags, list):
                 if len(flags) == 1 and isinstance(flags[0], dict):
                     flags = flags[0]
                 else:
-                    raise _zmake_exception("compiler flags(%s) MUST be dict" %str(flags))
+                    raise zmake.core.exception("compiler flags(%s) MUST be dict" %str(flags))
             else:
-                raise _zmake_exception("compiler flags(%s) MUST be dict" %str(flags))
+                raise zmake.core.exception("compiler flags(%s) MUST be dict" %str(flags))
 
         if not isinstance(flags.get("all", ""), str):
-            raise _zmake_exception("compiler flags(%s) for 'all' MUST be string" %str(flags))
+            raise zmake.core.exception("compiler flags(%s) for 'all' MUST be string" %str(flags))
 
         if not isinstance(flags.get(file_name, ""), str):
-            raise _zmake_exception("compiler flags(%s) for '%s' MUST be string" %(str(flags), file_name))
+            raise zmake.core.exception("compiler flags(%s) for '%s' MUST be string" %(str(flags), file_name))
 
         return flags.get("all", "") + " " + flags.get(file_name, "")
 
@@ -391,26 +388,26 @@ class library(_module):
 
     def __new__(cls, name, src, desc = "", hdrdirs = [], cflags = {}, cppflags = {}, asmflags = {}):
         if not isinstance(hdrdirs, list):
-            raise _zmake_exception("'hdrdirs' MUST be list for ZMake library(%s)" %(str(hdrdirs), name))
+            raise zmake.core.exception("'hdrdirs' MUST be list for ZMake library(%s)" %(str(hdrdirs), name))
 
         return super(library, cls).__new__(cls,
             name, ENTITY_TYPE_LIB, src, desc, cflags, cppflags, asmflags)
 
     def __init__(self, name, src, desc = "", hdrdirs = [], cflags = {}, cppflags = {}, asmflags = {}):
-        logging.debug("create ZMake library %s", name)
+        zmake.core.LOGGER.debug("create ZMake library %s", name)
         super(library, self).__init__(name, ENTITY_TYPE_LIB,
             src, desc, cflags, cppflags, asmflags)
 
-        logging.debug("ZMake library %s details:", name)
-        logging.debug("\tsrc(final) = %s", pprint.pformat(self.src))
+        zmake.core.LOGGER.debug("ZMake library %s details:", name)
+        zmake.core.LOGGER.debug("\tsrc(final) = %s", pprint.pformat(self.src))
 
         self.hdrdirs = []
         for dir in hdrdirs:
             self.hdrdirs.append(dir)
         self._lib_name = 'lib' + name + '.a'
 
-        logging.debug("\thdrdirs(final) = %s", pprint.pformat(self.hdrdirs))
-        logging.debug("\t_lib_name = %s", self._lib_name)
+        zmake.core.LOGGER.debug("\thdrdirs(final) = %s", pprint.pformat(self.hdrdirs))
+        zmake.core.LOGGER.debug("\t_lib_name = %s", self._lib_name)
         library._libs.setdefault(name, self)
 
     @staticmethod
@@ -438,7 +435,7 @@ class library(_module):
         fd.write("# libraries\n\n")
 
         for name, lib in library._libs.items():
-            logging.debug("generate library %s", name)
+            zmake.core.LOGGER.debug("generate library %s", name)
             fd.write("# %s\n\n" %name)
             lib.make_gen(fd, name, "")
 
@@ -460,7 +457,7 @@ class library(_module):
         fd.write("\n")
 
         for name, lib in library._libs.items():
-            logging.debug("generate library %s", name)
+            zmake.core.LOGGER.debug("generate library %s", name)
             fd.write("# %s\n\n" %name)
             lib.ninja_gen(fd, name, "")
 
@@ -496,37 +493,37 @@ class application(_module):
     _apps = {}
     def __new__(cls, name, src, desc = "", cflags = {}, cppflags = {}, asmflags = {}, linkflags = '', libs = []):
         if not isinstance(linkflags, str):
-            raise _zmake_exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
+            raise zmake.core.exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
 
         if not isinstance(libs, list):
-            raise _zmake_exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
+            raise zmake.core.exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
 
         return super(application, cls).__new__(cls,
             name, ENTITY_TYPE_APP, src, desc, cflags, cppflags, asmflags)
 
     def __init__(self, name, src, desc = "", cflags = {}, cppflags = {}, asmflags = {}, linkflags = '', libs = []):
-        logging.debug("create ZMake application %s", name)
+        zmake.core.LOGGER.debug("create ZMake application %s", name)
         super(application, self).__init__(name, ENTITY_TYPE_APP, src, desc, cflags, cppflags, asmflags)
         self.linkflags  = linkflags
         self._lib_dep   = ""
         self._lib_ld    = ""
         self._lib_hdrs  = ""
-        logging.debug("ZMake application %s details:", name)
-        logging.debug("\tsrc(final) = %s", pprint.pformat(self.src))
+        zmake.core.LOGGER.debug("ZMake application %s details:", name)
+        zmake.core.LOGGER.debug("\tsrc(final) = %s", pprint.pformat(self.src))
 
         for libname in libs:
             lib = library.find(libname)
             if lib == None:
-                logging.warning("invalid library(%s) for ZMake application(%s)", str(libname), name)
+                zmake.core.LOGGER.warning("invalid library(%s) for ZMake application(%s)", str(libname), name)
             else:
                 self._lib_dep += " " + libname
                 self._lib_ld  += " -l" + libname
                 for libhdr in lib.hdrdirs:
                     self._lib_hdrs += " -I" + libhdr
 
-        logging.debug("\t_lib_dep = %s", self._lib_dep)
-        logging.debug("\t_lib_ld = %s", self._lib_ld)
-        logging.debug("\t_lib_hdrs = %s", self._lib_hdrs)
+        zmake.core.LOGGER.debug("\t_lib_dep = %s", self._lib_dep)
+        zmake.core.LOGGER.debug("\t_lib_ld = %s", self._lib_ld)
+        zmake.core.LOGGER.debug("\t_lib_hdrs = %s", self._lib_hdrs)
         application._apps.setdefault(name, self)
 
     @staticmethod
@@ -545,7 +542,7 @@ class application(_module):
 
         for name, app in application._apps.items():
 
-            logging.debug("generate application %s", name)
+            zmake.core.LOGGER.debug("generate application %s", name)
             fd.write("# %s\n\n" %name)
             app.make_gen(fd, name, app._lib_hdrs)
 
@@ -568,7 +565,7 @@ class application(_module):
         fd.write("\n")
 
         for name, app in application._apps.items():
-            logging.debug("generate application %s", name)
+            zmake.core.LOGGER.debug("generate application %s", name)
             fd.write("# %s\n\n" %name)
             app.ninja_gen(fd, name, variable.ninja_reference_format(app._lib_hdrs))
 
@@ -594,13 +591,13 @@ class target(entity):
 
     def __new__(cls, name, desc = "", cmd = "", deps = []):
         if not isinstance(cmd, str):
-            raise _zmake_exception("'cmd' MUST be string for ZMake target(%s)" %(str(cmd), name))
+            raise zmake.core.exception("'cmd' MUST be string for ZMake target(%s)" %(str(cmd), name))
 
         if not isinstance(deps, list):
-            raise _zmake_exception("'deps' MUST be list for ZMake target(%s)" %(str(deps), name))
+            raise zmake.core.exception("'deps' MUST be list for ZMake target(%s)" %(str(deps), name))
 
         if cmd == "" and deps == []:
-            raise _zmake_exception("'cmd' and 'deps' MUST NOT be absent at the same time for ZMake target(%s)" %name)
+            raise zmake.core.exception("'cmd' and 'deps' MUST NOT be absent at the same time for ZMake target(%s)" %name)
 
         return super(target, cls).__new__(cls, name, ENTITY_TYPE_TGT, desc)
 
@@ -609,7 +606,7 @@ class target(entity):
         self.desc   = desc
         self.cmd    = cmd
         self.deps   = deps
-        logging.debug("create ZMake target %s\n\tdesc = %s\n\tcmd = %s\n\tdeps = %s",
+        zmake.core.LOGGER.debug("create ZMake target %s\n\tdesc = %s\n\tcmd = %s\n\tdeps = %s",
             name, desc, pprint.pformat(cmd), pprint.pformat(deps))
         target._targets.setdefault(name, self)
 
@@ -640,13 +637,12 @@ class target(entity):
         else:
             fd.write("build cmd_%s: rule_cmd\n" %self.name)
             fd.write("    pool = console\n")
-            fd.write("    CMD = %s\n" %self.cmd)
+            fd.write("    CMD = %s\n" %variable.ninja_reference_format(self.cmd))
 
         if self.desc != "":
             fd.write("    DESC = %s\n" %self.desc)
 
         if self.cmd != "":
-            self.cmd = variable.ninja_reference_format(self.cmd)
             fd.write("build %s: phony cmd_%s\n" %(self.name, self.name))
 
         fd.write("\n")

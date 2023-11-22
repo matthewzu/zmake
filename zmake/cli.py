@@ -9,9 +9,10 @@
 """
 
 import os, shutil, argparse, logging
+import zmake.core
 import zmake.kconfig
 import zmake.yaml
-import zmake.core
+import zmake.generator
 
 def generator():
     parser = argparse.ArgumentParser(description = "ZMake build Generator")
@@ -64,7 +65,7 @@ def generator():
         zmake.kconfig.genconfig()
 
     zmake.yaml.init(args.yaml)
-    zmake.core.generate()
+    zmake.generator.generate()
 
 def demo_create():
     parser = argparse.ArgumentParser(description = "ZMake demo project creator")
