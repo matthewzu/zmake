@@ -1,13 +1,18 @@
 # moudle11 configuartion
 
+MOD11_PATH:
+  type: var
+  desc: path for moudle11 library
+  val:  $(SRC_PATH)/mod1/mod11
+
 mod11:
   type:         lib
   desc:         moudle11 library
   opt:          CONFIG_MODULE11
   src:
-    - $(SRC_PATH)/mod1/mod11
+    - $(MOD11_PATH)
   hdrdirs:
-    - $(SRC_PATH)/mod1/mod11/include
+    - $(MOD11_PATH)/include
   cflags:
     all:      -DMOD11
-    mod11.c:  -DMOD11_MOD11 -I$(SRC_PATH)/mod1/mod11/include
+    mod11.c:  -DMOD11_MOD11 -I$(MOD11_PATH)/include

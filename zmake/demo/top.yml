@@ -19,6 +19,24 @@ includes:
 # system variables
 #   1)SRC_PATH: path for source code
 #   2)PRJ_PATH: path for project
+#   3)CC:       compiler with parameters for objects, must be specified
+#   3)AR:       archiver with parameters for libraries, must be specified
+#   3)LD:       linker with parameters for applications, must be specified
+
+CC:
+  type: var
+  desc: compiler with parameters for objects
+  val:  gcc -MD
+
+AR:
+  type: var
+  desc: archiver with parameters for libraries
+  val:  ar
+
+LD:
+  type: var
+  desc: linker with parameters for applications
+  val:  gcc
 
 # customer variables
 #
@@ -28,22 +46,7 @@ includes:
 #     type: var
 #     desc: xxx # optional, description that is only for display
 #     val:  xxx # string that could include references to other variables
-                # that have beed defined, such as '$(var_name)', or any value
-
-CC:
-  type: var
-  desc: compiler for objects
-  val:  gcc -MD
-
-AR:
-  type: var
-  desc: archiver for libraries
-  val:  ar
-
-LD:
-  type: var
-  desc: linker for applications
-  val:  gcc
+#               # that have beed defined, such as '$(var_name)', or any value
 
 # libraries
 #
@@ -113,9 +116,13 @@ LD:
 # target name:      # must be unique for all entities
 #   type: target
 #   desc: xxx # optional, description that is only for display
-#   cmd:  xxx # optional, commands that need be executed with description:
-#     desc:   command
+#   cmd:  xxx # string, optional, commands that need be executed with description
 #   deps: xxx # optional, modules depended:
 #     - xxx
 #
 # Note that 'cmd' and 'deps' MUST NOT be absent at the same time.
+
+info:
+  type: target
+  desc: display hello world
+  cmd:  echo hello world
