@@ -1,5 +1,12 @@
 **ZMake**是一个基于`YAML`和`Kconfig`的编译和配置框架，可以生成`GNU Make`和`Ninja build`的编译脚本。这是最近写作和准备[嵌入式操作系统的编译和配置框架 - 概述](https://zhuanlan.zhihu.com/p/669538982)系列文章的一个副产品。
 
+- [1. 概述](#1-概述)
+- [2. 安装](#2-安装)
+- [3. 使用](#3-使用)
+- [4. YAML配置](#4-yaml配置)
+  - [5. 如何添加一个模块](#5-如何添加一个模块)
+  - [6. TODO](#6-todo)
+
 # 1. 概述
 
 常见嵌入式操作系统的编译和配置框架都多多少存在一些问题，因此尝试结合各个嵌入式操作系统的优点组织了一个编译和配置框架。该框架基于几年前做的的一个基于`KConfig`和`GNU Make`的实验性编译框架[simple-build-framework](https://github.com/matthewzu/simple-build-framework)。
@@ -315,7 +322,7 @@ info:
   cmd:  echo hello world
 ```
 
-## 5. How to add one module
+## 5. 如何添加一个模块
 
 1. 在框架中为该模块创建一个为目录；
 2. 在该目录中为模块添加源文件和 "YAML 配置文件"；
