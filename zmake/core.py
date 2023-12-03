@@ -30,7 +30,7 @@ LOGGER      = None
 
 # misc
 
-_ZMAKE_VER = '0.1.0'
+_ZMAKE_VER = '0.1.1'
 
 # utilities
 
