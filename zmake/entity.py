@@ -38,13 +38,13 @@ class entity(object):
 
     def __new__(cls, name, type, desc= ""):
         if not isinstance(name, str):
-            raise zmake.core.exception("'name' MUST be str for ZMake Entity" %str(name))
+            raise zmake.core.exception("'name' (%s) MUST be str for ZMake Entity" %str(name))
 
         if type not in ENTITY_TYPES:
-            raise zmake.core.exception("invalid type for ZMake Entity(%s)" %(str(type), name))
+            raise zmake.core.exception("'type' (%s) for ZMake Entity(%s)" %(str(type), name))
 
         if not isinstance(desc, str):
-            raise zmake.core.exception("'desc' MUST be str for ZMake Entity(%s)" %(str(name), name))
+            raise zmake.core.exception("'desc' (%s) MUST be str for ZMake Entity(%s)" %(str(desc), name))
 
         return super(entity, cls).__new__(cls)
 
@@ -63,7 +63,7 @@ class variable(entity):
 
     def __new__(cls, name, val, desc = ""):
         if val == None:
-            raise zmake.core.exception("invalid value for ZMake variable %s" %name)
+            raise zmake.core.exception("invalid 'val' for ZMake variable %s" %name)
         else:
             return super(variable, cls).__new__(cls, name, ENTITY_TYPE_VAR, desc)
 
@@ -244,7 +244,7 @@ class _module(entity):
 
     def __new__(cls, name, type, src, desc = "", cflags = {}, cppflags = {}, asmflags = {}):
         if type != ENTITY_TYPE_APP and type != ENTITY_TYPE_LIB:
-            raise zmake.core.exception("invalid type %s for ZMake module(%s)" %(type, name))
+            raise zmake.core.exception("invalid 'type' (%s) for ZMake module(%s)" %(type, name))
 
         if not isinstance(src, list):
             raise zmake.core.exception("'src' (%s) MUST be list for ZMake module(%s)" %(str(src), name))
@@ -344,7 +344,7 @@ class _module(entity):
         elif type == _ZMAKE_SRC_TYPE_ASM:
             flags = asmflags
         else:
-            raise zmake.core.exception("invalid source type %s" %type)
+            raise zmake.core.exception("invalid source 'type' (%s)" %type)
 
         if not isinstance(flags, dict):
             if isinstance(flags, list):
@@ -388,7 +388,7 @@ class library(_module):
 
     def __new__(cls, name, src, desc = "", hdrdirs = [], cflags = {}, cppflags = {}, asmflags = {}):
         if not isinstance(hdrdirs, list):
-            raise zmake.core.exception("'hdrdirs' MUST be list for ZMake library(%s)" %(str(hdrdirs), name))
+            raise zmake.core.exception("'hdrdirs' (%s) MUST be list for ZMake library(%s)" %(str(hdrdirs), name))
 
         return super(library, cls).__new__(cls,
             name, ENTITY_TYPE_LIB, src, desc, cflags, cppflags, asmflags)
@@ -493,10 +493,10 @@ class application(_module):
     _apps = {}
     def __new__(cls, name, src, desc = "", cflags = {}, cppflags = {}, asmflags = {}, linkflags = '', libs = []):
         if not isinstance(linkflags, str):
-            raise zmake.core.exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
+            raise zmake.core.exception("'linkflags' (%s) MUST be string for ZMake application(%s)" %(str(linkflags), name))
 
         if not isinstance(libs, list):
-            raise zmake.core.exception("'linkflags' MUST be string for ZMake application(%s)" %(str(linkflags), name))
+            raise zmake.core.exception("'linkflags' (%s) MUST be string for ZMake application(%s)" %(str(linkflags), name))
 
         return super(application, cls).__new__(cls,
             name, ENTITY_TYPE_APP, src, desc, cflags, cppflags, asmflags)
@@ -581,7 +581,7 @@ class target(entity):
         name: string, the name of the entity
         desc: string, optional, the description of the entity
         cmd:  string, optional, commands that need be executed with description
-        deps: list, optional, modules depended
+        deps: list, optional, libraries depended that must be defined previously
             - xxx
 
         Note that 'cmd' and 'deps' MUST NOT be absent at the same time.
@@ -591,10 +591,10 @@ class target(entity):
 
     def __new__(cls, name, desc = "", cmd = "", deps = []):
         if not isinstance(cmd, str):
-            raise zmake.core.exception("'cmd' MUST be string for ZMake target(%s)" %(str(cmd), name))
+            raise zmake.core.exception("'cmd' (%s) MUST be string for ZMake target(%s)" %(str(cmd), name))
 
         if not isinstance(deps, list):
-            raise zmake.core.exception("'deps' MUST be list for ZMake target(%s)" %(str(deps), name))
+            raise zmake.core.exception("'deps' (%s) MUST be list for ZMake target(%s)" %(str(deps), name))
 
         if cmd == "" and deps == []:
             raise zmake.core.exception("'cmd' and 'deps' MUST NOT be absent at the same time for ZMake target(%s)" %name)
