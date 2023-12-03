@@ -68,8 +68,8 @@ def _parse():
                     config.get("asmflags", {}), config.get("linkflags", ""),
                     config.get("libs", []))
         elif obj_type == zmake.entity.ENTITY_TYPE_TGT:
-            zmake.entity.target(name, config.get("desc", ""), config.get("cmd", {}),
-                config.get("deps", {}))
+            zmake.entity.target(name, config.get("desc", ""), config.get("cmd", ""),
+                config.get("deps", []))
         else:
             zmake.core.LOGGER.warning("invalid object type %s for YAML Object %s", obj_type, name)
             continue
